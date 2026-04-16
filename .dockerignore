@@ -1,0 +1,15 @@
+# 前端单独部署，不进 API 镜像
+frontend
+**/node_modules
+**/.next
+**/dist
+
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+.env
+.env.*
+.DS_Store
