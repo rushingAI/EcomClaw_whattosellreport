@@ -1,0 +1,14 @@
+{
+  "name": "clawd-crawlee",
+  "version": "1.0.0",
+  "description": "Playwright/Crawlee scraper for Amazon product data.",
+  "main": "assets/amazon_handler.js",
+  "scripts": {
+    "start": "node assets/amazon_handler.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "crawlee": "^3.0.0",
+    "playwright": "^1.40.0"
+  }
+}

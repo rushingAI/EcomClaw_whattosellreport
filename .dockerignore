@@ -1,5 +1,7 @@
 # 前端单独部署，不进 API 镜像
 frontend
+# crawlee/Dockerfile 只用于本地 Mac 开发；Dockerfile 内容以 crawlee/package.json 替代
+crawlee/Dockerfile
 **/node_modules
 **/.next
 **/dist
