@@ -137,6 +137,9 @@ def _run_node(url: str, marketplace: str = "us", extra_args: list[str] | None = 
     handler_fs = os.path.join(node_cwd, handler_rel)
 
     if not os.path.isfile(handler_fs):
+        # #region agent log
+        _debug_log("node_handler_missing", {"location": "scraper.py:_run_node", "hypothesisId": "B", "handler_fs": handler_fs})
+        # #endregion
         return []
 
     # 与 clawd-crawlee 镜像 entrypoint 中 xvfb 参数一致
@@ -148,6 +151,9 @@ def _run_node(url: str, marketplace: str = "us", extra_args: list[str] | None = 
         "--marketplace", marketplace,
         *extra_args,
     ]
+    # #region agent log
+    _debug_log("node_start", {"location": "scraper.py:_run_node", "hypothesisId": "B", "url": url, "marketplace": marketplace, "node_cwd": node_cwd})
+    # #endregion
     try:
         proc = subprocess.run(
             cmd,
@@ -156,12 +162,36 @@ def _run_node(url: str, marketplace: str = "us", extra_args: list[str] | None = 
             text=True,
             timeout=120,
         )
-        return _parse_success_lines(proc.stdout)
+        results = _parse_success_lines(proc.stdout)
+        # #region agent log
+        stdout_lower = proc.stdout.lower()
+        has_captcha = "captcha" in stdout_lower or "robot check" in stdout_lower or "enter the characters" in stdout_lower or "api-services.amazon" in stdout_lower
+        _debug_log("node_result", {
+            "location": "scraper.py:_run_node",
+            "hypothesisId": "A,B,C,D",
+            "returncode": proc.returncode,
+            "stderr_snippet": proc.stderr[:1200],
+            "stdout_snippet": proc.stdout[:3000],
+            "stdout_len": len(proc.stdout),
+            "success_count": len(results),
+            "has_captcha": has_captcha,
+        })
+        # #endregion
+        return results
     except subprocess.TimeoutExpired:
+        # #region agent log
+        _debug_log("node_timeout", {"location": "scraper.py:_run_node", "hypothesisId": "B", "url": url})
+        # #endregion
         return []
     except FileNotFoundError:
+        # #region agent log
+        _debug_log("node_not_found", {"location": "scraper.py:_run_node", "hypothesisId": "B", "url": url})
+        # #endregion
         return []
-    except Exception:
+    except Exception as e:
+        # #region agent log
+        _debug_log("node_exception", {"location": "scraper.py:_run_node", "hypothesisId": "B", "error": str(e), "url": url})
+        # #endregion
         return []
 
 
