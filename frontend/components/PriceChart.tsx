@@ -51,7 +51,7 @@ export default function PriceChart({ data, currency }: Props) {
             label={{ value: "产品数", angle: -90, position: "insideLeft", fontSize: 11, fill: "#9ca3af" }}
           />
           <Tooltip
-            formatter={(v: number) => [`${v} 个产品`, "数量"]}
+            formatter={(v) => [`${Number(v ?? 0)} 个产品`, "数量"]}
             contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
           />
           <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={56}>

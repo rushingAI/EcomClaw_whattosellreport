@@ -56,14 +56,14 @@ export default function RatingDistributionChart({ data }: Props) {
             width={28}
           />
           <Tooltip
-            formatter={(v: number) => [`${v.toFixed(1)}%`, "占比"]}
+            formatter={(v) => [`${Number(v ?? 0).toFixed(1)}%`, "占比"]}
             contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
           />
           <Bar dataKey="pct" radius={[0, 4, 4, 0]} maxBarSize={22}>
             <LabelList
               dataKey="pct"
               position="right"
-              formatter={(v: number) => `${v.toFixed(0)}%`}
+              formatter={(v) => `${Number(v ?? 0).toFixed(0)}%`}
               style={{ fontSize: 11, fill: "#6b7280" }}
             />
             {sorted.map((entry) => (
