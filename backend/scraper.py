@@ -53,6 +53,20 @@ def _use_node_scraper() -> bool:
     return False
 
 
+def _debug_log(msg: str, data: dict) -> None:
+    import time as _time
+    entry = json.dumps({"sessionId": "9dcbc6", "timestamp": int(_time.time() * 1000), "message": msg, **data}, ensure_ascii=False)
+    # stdout → Railway Logs 面板可见
+    print(f"[DEBUG] {entry}", flush=True)
+    # 本地文件（Railway 上静默失败）
+    try:
+        log_path = "/Users/gaochang/openclaw_e-commercial/.cursor/debug-9dcbc6.log"
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(entry + "\n")
+    except Exception:
+        pass
+
+
 def _parse_success_lines(stdout: str) -> list[dict]:
     results: list[dict] = []
     for line in stdout.splitlines():
@@ -77,6 +91,9 @@ def _run_docker(url: str, marketplace: str = "us", extra_args: list[str] | None 
         "--marketplace", marketplace,
         *extra_args,
     ]
+    # #region agent log
+    _debug_log("docker_start", {"location": "scraper.py:_run_docker", "hypothesisId": "B", "url": url, "marketplace": marketplace, "cmd": " ".join(cmd)})
+    # #endregion
     try:
         proc = subprocess.run(
             cmd,
@@ -84,10 +101,31 @@ def _run_docker(url: str, marketplace: str = "us", extra_args: list[str] | None 
             text=True,
             timeout=120,
         )
-        return _parse_success_lines(proc.stdout)
+        results = _parse_success_lines(proc.stdout)
+        # #region agent log
+        stdout_lower = proc.stdout.lower()
+        has_captcha = "captcha" in stdout_lower or "robot check" in stdout_lower or "enter the characters" in stdout_lower or "api-services.amazon" in stdout_lower
+        _debug_log("docker_result", {
+            "location": "scraper.py:_run_docker",
+            "hypothesisId": "A,B,C,D",
+            "returncode": proc.returncode,
+            "stderr_snippet": proc.stderr[:1200],
+            "stdout_snippet": proc.stdout[:3000],
+            "stdout_len": len(proc.stdout),
+            "success_count": len(results),
+            "has_captcha": has_captcha,
+        })
+        # #endregion
+        return results
     except subprocess.TimeoutExpired:
+        # #region agent log
+        _debug_log("docker_timeout", {"location": "scraper.py:_run_docker", "hypothesisId": "B", "url": url})
+        # #endregion
         return []
-    except Exception:
+    except Exception as e:
+        # #region agent log
+        _debug_log("docker_exception", {"location": "scraper.py:_run_docker", "hypothesisId": "B", "error": str(e), "url": url})
+        # #endregion
         return []
 
 
@@ -175,4 +213,13 @@ def extract_top_asins(search_results: list[dict], n: int = 5) -> list[str]:
                 asins.append(asin)
             if len(asins) >= n:
                 return asins
+    # #region agent log
+    _debug_log("extract_top_asins", {
+        "location": "scraper.py:extract_top_asins",
+        "hypothesisId": "E",
+        "search_results_count": len(search_results),
+        "top_level_keys": [list(r.keys()) for r in search_results[:2]],
+        "asins_found": asins,
+    })
+    # #endregion
     return asins
