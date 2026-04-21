@@ -40,13 +40,13 @@ export function useAuth() {
   );
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }: { data: { user: User | null } }) => {
       const profile = user ? await fetchProfile(user.id) : null;
       setState({ user, profile, loading: false });
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_, session) => {
+      async (_event: string, session: import("@supabase/supabase-js").Session | null) => {
         const user = session?.user ?? null;
         const profile = user ? await fetchProfile(user.id) : null;
         setState({ user, profile, loading: false });

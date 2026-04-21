@@ -94,7 +94,7 @@ export function useAnalysis() {
         status: "done",
         phases: [{ phase: "cached", message: "已加载缓存报告", done: true }],
         sections: cached.sections,
-        chartData: cached.chartData ? { rating_distribution: [], ...cached.chartData } : null,
+        chartData: cached.chartData ?? null,
         errorMessage: null, errorCode: null, currentPhase: null, cachedAt: cached.cachedAt,
       });
       return;
