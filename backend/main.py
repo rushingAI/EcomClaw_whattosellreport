@@ -9,13 +9,14 @@ import os
 from typing import AsyncGenerator
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 load_dotenv()
 
 from analyzer import stream_analysis
+from auth import CurrentUser, check_and_consume_quota, get_current_user
 from chart_data import extract_chart_data
 from scraper import (
     MARKETPLACES,
@@ -111,9 +112,12 @@ async def analysis_stream(keyword: str, marketplace: str) -> AsyncGenerator[str,
 async def analyze(
     keyword: str = Query(..., min_length=1, max_length=200),
     marketplace: str = Query("us"),
+    user: CurrentUser = Depends(get_current_user),
 ):
     if marketplace not in MARKETPLACES:
         marketplace = "us"
+    # 先消费配额（原子操作，配额耗尽返回 402）
+    await check_and_consume_quota(user)
     return StreamingResponse(
         analysis_stream(keyword, marketplace),
         media_type="text/event-stream",
