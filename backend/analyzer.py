@@ -210,20 +210,36 @@ async def stream_analysis(
     marketplace: str,
     raw_data: dict,
 ) -> AsyncGenerator[dict, None]:
-    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    moonshot_key = os.environ.get("MOONSHOT_API_KEY", "")
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
 
     yield {"type": "thinking", "message": "正在调用 AI 分析引擎..."}
 
     full_text = ""
     try:
-        async with client.messages.stream(
-            model="claude-haiku-4-5",
-            max_tokens=8000,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": _build_user_prompt(keyword, marketplace, raw_data)}],
-        ) as stream:
-            async for text in stream.text_stream:
-                full_text += text
+        if moonshot_key:
+            client = anthropic.AsyncAnthropic(
+                api_key=moonshot_key.strip(),
+                base_url="https://api.kimi.com/coding/",
+            )
+            async with client.messages.stream(
+                model="kimi-for-coding",
+                max_tokens=32768,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": _build_user_prompt(keyword, marketplace, raw_data)}],
+            ) as stream:
+                async for text in stream.text_stream:
+                    full_text += text
+        else:
+            client = anthropic.AsyncAnthropic(api_key=anthropic_key)
+            async with client.messages.stream(
+                model="claude-haiku-4-5",
+                max_tokens=8000,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": _build_user_prompt(keyword, marketplace, raw_data)}],
+            ) as stream:
+                async for text in stream.text_stream:
+                    full_text += text
 
     except Exception as e:
         yield {"type": "error", "message": f"AI 分析失败: {str(e)}"}
